@@ -29,7 +29,7 @@
     "node-fetch": "^3.3.2",
     "specmatic": "^2.13.1",
     "specmatic-beta": "github:znsio/specmatic-node-beta#039b56f89aede4ea0854dec81ee71954e0fc6d2a",
-    "supertest": "^7.0.0",
+    "supertest": "^7.1.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
   }
