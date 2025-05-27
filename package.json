@@ -27,7 +27,7 @@
     "cross-env": "^7.0.3",
     "jest": "^29.7.0",
     "node-fetch": "^3.3.2",
-    "specmatic": "^2.13.1",
+    "specmatic": "^2.13.2",
     "specmatic-beta": "github:znsio/specmatic-node-beta#039b56f89aede4ea0854dec81ee71954e0fc6d2a",
     "supertest": "^7.0.0",
     "swagger-jsdoc": "^6.2.8",
