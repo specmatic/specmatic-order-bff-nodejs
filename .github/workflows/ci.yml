@@ -6,58 +6,54 @@ on:
       - main
 
 jobs:
-    test:
-        strategy:
-          matrix:
-            node-version: [20.x]
-            os: [ubuntu-latest]
-        runs-on: ${{ matrix.os }}
-        steps:
-          - uses: actions/checkout@v4
-          
-          - name: Set up JRE 17
-            uses: actions/setup-java@v4
-            with:
-              distribution: 'temurin' # See 'Supported distributions' for available options
-              java-version: '17'
-              java-package: 'jre'
-              
-          - name: Set up Node
-            uses: actions/setup-node@v4
-            with:
-              node-version: ${{ matrix.node-version }}
-          
-          - name: Run npm install
-            run: npm install
-          
-          - name: Run npm test
-            run: npm run test-ci
-          
-          - name: Run Specmatic Insights Github Build Reporter
-            env:
-              GITHUB_TOKEN: ${{ secrets.ACTIONS_API_ACCESS_TOKEN }}
-            run: |
-              api_url="https://api.github.com/repos/${{ github.repository }}/actions/workflows"
-              workflow_name="${{ github.workflow }}"
-              response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" $api_url)
-              workflow_id=$(echo "$response" | jq -r --arg workflow_name "$workflow_name" '.workflows[] | select(.name == $workflow_name) | .id')
-              echo "Workflow ID: $workflow_id" # Debug print
-              docker run \
-                -v ${{ github.workspace }}:/workspace \
-                specmatic/specmatic-insights-github-build-reporter:latest \
-                  --specmatic-insights-host https://insights.specmatic.in \
-                  --specmatic-reports-dir /workspace/build/reports/specmatic \
-                  --org-id ${{ secrets.SPECMATIC_ORG_ID }} \
-                  --branch-ref ${{ github.ref }} \
-                  --branch-name ${{ github.ref_name }} \
-                  --build-definition-id "$workflow_id" \
-                  --build-id ${{ github.run_id }} \
-                  --repo-name ${{ github.event.repository.name }} \
-                  --repo-id ${{ github.repository_id }} \
-                  --repo-url ${{ github.event.repository.html_url }}
+  test:
+    strategy:
+      matrix:
+        node-version: [20.x]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
 
-          - name: Upload HTML Test Report
-            uses: actions/upload-artifact@v4
-            with:
-              name: ${{ matrix.os }}-${{ matrix.node-version }}-html-report
-              path: build/reports/specmatic/html
+      - name: Set up JRE 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin" # See 'Supported distributions' for available options
+          java-version: "17"
+          java-package: "jre"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Run npm install
+        run: npm install
+
+      - name: Run npm test
+        run: npm run test-ci
+
+      - name: Save Specmatic license
+        run: |
+          mkdir -p ~/.specmatic
+          echo "${{ secrets.SPECMATIC_LICENSE_KEY }}" > ~/.specmatic/specmatic-license.txt
+
+      - name: Run Specmatic Insights Build Reporter
+        run: |
+          docker run \
+            -v ${{ github.workspace }}:/workspace \
+            -v ~/.specmatic:/root/.specmatic \
+            -w /workspace \
+            specmatic/specmatic-reporter \
+            send-report \
+            --metadata build_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} \
+            --branch-name ${{ github.ref_name }} \
+            --repo-name ${{ github.event.repository.name }} \
+            --repo-id ${{ github.repository_id }} \
+            --repo-url ${{ github.event.repository.html_url }}
+
+      - name: Upload HTML Test Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }}-${{ matrix.node-version }}-html-report
+          path: build/reports/specmatic/html
