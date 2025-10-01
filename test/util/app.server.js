@@ -3,7 +3,7 @@ let app;
 
 function startAppServer(port) {
   return new Promise((resolve, _reject) => {
-    app = require("../../../src/app.js");
+    app = require("../../src/app.js");
     const server = http.createServer(app);
     server.listen(port);
     server.on("listening", async () => {
