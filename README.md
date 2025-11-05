@@ -1,5 +1,5 @@
 # Specmatic Sample: NodeJS BFF calling Domain API
-![tests](https://github.com/specmatic/specmatic-order-backend-nodejs/actions/workflows/test.yml/badge.svg)
+![tests](https://github.com/specmatic/specmatic-order-bff-nodejs/actions/workflows/ci.yml/badge.svg)
 
 * [Specmatic Website](https://specmatic.io)
 * [Specmatic Documentation](https://specmatic.io/documentation.html)
