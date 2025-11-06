@@ -33,9 +33,9 @@ describe("Contract Tests", () => {
             .withExposedPorts({ host: 9092, container: 9092 })
             .withExposedPorts({ host: 9999, container: 9999 })
             .withLogConsumer(stream => {
-                stream.on("data", line => console.log(line));
-                stream.on("err", line => console.error(line));
-                stream.on("end", () => console.log("Kafka mock stopped"));
+                stream.on("data", process.stdout.write.bind(process.stdout));
+                stream.on("err", process.stderr.write.bind(process.stderr));
+                stream.on("end", () => process.stdout.write("Kafka mock stopped"));
             })
             .withWaitStrategy(Wait.forLogMessage(/KafkaMock has started/i))
             .start();
