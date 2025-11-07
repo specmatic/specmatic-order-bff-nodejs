@@ -2,7 +2,7 @@
 ![tests](https://github.com/specmatic/specmatic-order-bff-nodejs/actions/workflows/ci.yml/badge.svg)
 
 * [Specmatic Website](https://specmatic.io)
-* [Specmatic Documentation](https://specmatic.io/documentation.html)
+* [Specmatic Documentation](https://docs.specmatic.io)
 
 This sample project demonstrates how we can practice contract-driven development and contract testing in a NodeJS application that depends on an external domain service and Kafka. Here, specmatic is used to stub calls to domain API service based on its OpenAPI spec and mock Kafka based on its AsyncAPI spec.
 
@@ -36,15 +36,23 @@ This will start the main nodejs application providing backend service for fronte
 npm start
 ```
 Access find orders API at http://localhost:8080/findAvailableProducts. This is used to demo HTTP stubbing using OpenAPI and Kafka mocking using AsyncAPI<br>
-
 _**Note:** Unless domain API service and Kafka mocks are running, the above requests will fail. Move to the next section for the solution!_
 
 ### Start BFF Server with Dependencies (Domain API Stub and Kafka Mock Servers)
 This will start the nodejs based BFF server with domain API stubbed using Specmatic HTTP stub server and Kafka mocked using Specmatic Kafka mock server to demonstrate workings of the stub server
+
 ```shell
 npm run startWithDeps
 ```
-Access the find orders API at http://localhost:8080/findAvailableProducts **with a header of pageSize: number**. The result should be like
+
+Try calling one of the endpoints from the BFF Specification, for example:
+
+```shell
+curl -H "pageSize: 10" "http://localhost:8080/findAvailableProducts"
+```
+
+Your result should look something like this:
+
 ```json
 [{"id":698,"name":"NUBYR","type":"book","inventory":278}]
 ```
