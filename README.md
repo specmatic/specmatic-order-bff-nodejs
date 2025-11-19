@@ -1,22 +1,20 @@
 # Specmatic Sample: NodeJS BFF calling Domain API
 ![tests](https://github.com/specmatic/specmatic-order-bff-nodejs/actions/workflows/ci.yml/badge.svg)
 
-* [Specmatic Website](https://specmatic.io)
-* [Specmatic Documentation](https://docs.specmatic.io)
-
-This sample project demonstrates how we can practice contract-driven development and contract testing in a NodeJS application that depends on an external domain service and Kafka. Here, specmatic is used to stub calls to domain API service based on its OpenAPI spec and mock Kafka based on its AsyncAPI spec.
-
-Here is the [OpenAPI spec](https://github.com/specmatic/specmatic-order-contracts/blob/main/io/specmatic/examples/store/openapi/api_order_v3.yaml) of the domain API that defines the API endpoints, its request parameters and response along with their schema.
-
-Here is the [AsyncAPI spec](https://github.com/specmatic/specmatic-order-contracts/blob/main/io/specmatic/examples/store/asyncapi/kafka.yaml) of Kafka that defines the topics and message schema.
-
-## Definitions
-* BFF: Backend for Front End
-* Domain API: API managing the domain model
-* Specmatic Stub/Mock Server: Create a server that can act as a real service using its OpenAPI or AsyncAPI spec
+<!-- TOC -->
+- [Background](#background)
+- [Tech](#tech)
+- [Run Contract Tests](#run-contract-tests)
+  - [Using npm](#using-npm)
+- [For More Info](#for-more-info)
+<!-- /TOC -->
 
 ## Background
-A typical web application might look like this. We can use Specmatic to practice contract-driven development and test all the components mentioned below. In this sample project, we look at how to do this for nodejs BFF which is dependent on Domain API Service and Kafka demonstrating both OpenAPI and AsyncAPI support in specmatic.
+This sample demonstrates contract-driven development for a Node.js backend-for-frontend (BFF) that orchestrates product search by delegating to the Specmatic Order Domain API and publishing Kafka messages. Specmatic virtualizes both downstream dependencies during testing so the BFF can be tested in isolation.
+
+The specifications consumed by `specmatic.yaml` are maintained in the [specmatic-order-contracts](https://github.com/specmatic/specmatic-order-contracts) repository:
+- [Domain API OpenAPI specification](https://github.com/specmatic/specmatic-order-contracts/blob/main/io/specmatic/examples/store/openapi/api_order_v3.yaml)
+- [Kafka AsyncAPI specification](https://github.com/specmatic/specmatic-order-contracts/blob/main/io/specmatic/examples/store/asyncapi/kafka.yaml)
 
 ![HTML client talks to client API which talks to backend API and Kafka](assets/specmatic-kafka-mocking-architecture.gif)
 
@@ -27,51 +25,25 @@ A typical web application might look like this. We can use Specmatic to practice
 4. Jest & SuperTest
 5. Docker
 
-### Install Dependencies
-1. Run `npm install`
+## Run Contract Tests
+Contract tests configure Specmatic using `specmatic.yaml` to fetch the shared specifications, start an HTTP stub for the Domain API, and virtualize Kafka. Ensure Docker Desktop is running because the Kafka mock runs in a container.
 
-### Start BFF Application
-This will start the main nodejs application providing backend service for frontend (BFF)
+### Using npm
 ```shell
-npm start
+npm install
+npm test
 ```
-Access find orders API at http://localhost:8080/findAvailableProducts. This is used to demo HTTP stubbing using OpenAPI and Kafka mocking using AsyncAPI<br>
-_**Note:** Unless domain API service and Kafka mocks are running, the above requests will fail. Move to the next section for the solution!_
-
-### Start BFF Server with Dependencies (Domain API Stub and Kafka Mock Servers)
-This will start the nodejs based BFF server with domain API stubbed using Specmatic HTTP stub server and Kafka mocked using Specmatic Kafka mock server to demonstrate workings of the stub server
-
-```shell
-npm run startWithDeps
-```
-
-Try calling one of the endpoints from the BFF Specification, for example:
-
-```shell
-curl -H "pageSize: 10" "http://localhost:8080/findAvailableProducts"
-```
-
-Your result should look something like this:
-
-```json
-[{"id":698,"name":"NUBYR","type":"book","inventory":278}]
-```
-
-### Run Tests
-This will start the Specmatic HTTP stub server for domain API and Specmatic Kafka mock server using the information in specmatic.json and run tests to validate BFF APIs.
-```shell
-npm run test
-```
+`npm test` launches the BFF, spins up Specmatic HTTP and Kafka mocks, and executes the Jest contract suite with API coverage reporting. Review the generated report at `reports/specmatic/html/index.html`.
 
 ## Troubleshooting
 1. Specmatic contract tests don't show up in VSCode Test Explorer
-   
+
    Specmatic is tested with projects using Jest framework. If you are using any other framework then let us know and we will revert with a solution. In case of jest, if contract tests don't show up, then try restarting the jest runners
    ![VS Code - Jest Commands](assets/vscode-jest-commands.png)
 
 2. Specmatic contract tests don't run in Jetbrain's PhpStorm
 
-    Jetbrain's PhpStorm does not read `test` script in package.json to determine the command to run tests. It instead uses its own interface to configure all the options. You can configure the same options in the test script in package.json, in PhpStorm's test run configuration as below
+   Jetbrain's PhpStorm does not read `test` script in package.json to determine the command to run tests. It instead uses its own interface to configure all the options. You can configure the same options in the test script in package.json, in PhpStorm's test run configuration as below
     - `test` script in package.json
     ```json
     {
@@ -81,4 +53,8 @@ npm run test
     }
     ```
     - Above configured in PhpStorm
-    ![PhpStorm Run Configuration](assets/phpstorm-run-configuration.jpg) <br>
+      ![PhpStorm Run Configuration](assets/phpstorm-run-configuration.jpg) <br>
+
+## For More Info
+- [Specmatic Website](https://specmatic.io)
+- [Specmatic Documentation](https://docs.specmatic.io)
