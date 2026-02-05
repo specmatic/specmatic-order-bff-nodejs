@@ -27,17 +27,17 @@ describe("Contract Tests", () => {
         process.env.FILTER = `PATH!=${excludedEndpoints}`;
         appServer = await startAppServer(process.env.APP_PORT);
         httpStub = await specmatic.startHttpStub(process.env.HTTP_STUB_HOST, Number.parseInt(process.env.HTTP_STUB_PORT || "8090"));
-        specmaticKafkaContainer = await new GenericContainer("specmatic/specmatic-kafka")
+        specmaticKafkaContainer = await new GenericContainer("specmatic/enterprise")
             .withBindMounts([{ source: path.resolve("specmatic.yaml"), target: "/usr/src/app/specmatic.yaml" }])
-            .withCommand(["virtualize"])
+            .withCommand(["mock"])
             .withExposedPorts({ host: 9092, container: 9092 })
             .withExposedPorts({ host: 9999, container: 9999 })
             .withLogConsumer(stream => {
                 stream.on("data", process.stdout.write.bind(process.stdout));
                 stream.on("err", process.stderr.write.bind(process.stderr));
-                stream.on("end", () => process.stdout.write("Kafka mock stopped"));
+                stream.on("end", () => process.stdout.write("Specmatic mock stopped"));
             })
-            .withWaitStrategy(Wait.forLogMessage(/KafkaMock has started/i))
+            .withWaitStrategy(Wait.forLogMessage(/AsyncMock has started/i))
             .start();
         await setupExpectations(httpStub.url, KAFKA_API_SERVER);
     }, TEST_TIMEOUT_MS);
@@ -50,7 +50,7 @@ describe("Contract Tests", () => {
 
     test("Run tests and verify expectations", async () => {
         await specmatic.testWithApiCoverage(getApp(), process.env.APP_HOST, Number.parseInt(process.env.APP_PORT || "8080"));
-        const response = await fetch(`${KAFKA_API_SERVER}/_expectations/verification_status`)
+        const response = await fetch(`${KAFKA_API_SERVER}/_specmatic/expectations/verification_status`)
         const responseData = await response.json();
         const isSuccess = responseData.success || false;
         if (typeof isSuccess === "boolean") {
@@ -89,7 +89,7 @@ async function setupHttpExpectations(httpStubUrl) {
  * @param {string} kafkaMockUrl - URL of the Kafka mock server
  */
 async function setupKafkaExpectations(kafkaMockUrl) {
-    const response = await fetch(`${kafkaMockUrl}/_expectations`, {
+    const response = await fetch(`${kafkaMockUrl}/_specmatic/expectations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ expectations: [{ topic: "product-queries", count: 2 }] }),

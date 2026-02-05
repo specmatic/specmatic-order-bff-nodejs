@@ -3,10 +3,28 @@ contracts:
   - git:
       url: https://github.com/specmatic/specmatic-order-contracts.git
     provides:
-      - io/specmatic/examples/store/openapi/product_search_bff_v4.yaml
+      - specs:
+          - io/specmatic/examples/store/openapi/product_search_bff_v4.yaml
+        specType: openapi
+        config:
+          baseUrl: "{APP_URL:http://localhost:8080}"
     consumes:
-      - io/specmatic/examples/store/openapi/api_order_v3.yaml
-      - io/specmatic/examples/store/asyncapi/kafka.yaml
+      - specs:
+        - io/specmatic/examples/store/openapi/api_order_v3.yaml
+        specType: openapi
+        config:
+          baseUrl: http://localhost:8090
+      - specs:
+        - io/specmatic/examples/store/asyncapi/kafka.yaml
+        specType: asyncapi
+        config:
+          inMemoryBroker:
+            host: localhost
+            port: 9092
+          servers:
+            - host: localhost:9092
+              protocol: kafka
+
 report:
   formatters:
     - type: text
