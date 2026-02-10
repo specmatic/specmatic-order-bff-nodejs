@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "start": "set DEBUG=specmatic-order-backend-nodejs:* && node ./src/bin/www",
-    "startWithDeps": "concurrently --kill-others \"npm run start\" \"specmatic stub --port 8090\" \"node start-kafka.js\"",
-    "startDeps": "concurrently --kill-others \"specmatic stub --port 8090\" \"node start-kafka.js\"",
+    "startWithDeps": "concurrently --kill-others \"npm run start\" \"specmatic mock --port 8090\" \"node start-kafka.js\"",
+    "startDeps": "concurrently --kill-others \"specmatic mock --port 8090\" \"node start-kafka.js\"",
     "test": "cross-env SPECMATIC_GENERATIVE_TESTS=true KAFKAJS_NO_PARTITIONER_WARNING=1 NODE_OPTIONS=--experimental-vm-modules NODE_NO_WARNINGS=1 node ./node_modules/jest/bin/jest.js --collectCoverage --detectOpenHandles --verbose=true",
     "test-ci": "cross-env SPECMATIC_LOG_LEVEL=debug DEBUG=specmatic-order-backend-nodejs:* npm run test",
     "generate-spec": "node ./src/tools/generateSpec.js"
