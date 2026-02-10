@@ -26,7 +26,7 @@ The specifications consumed by `specmatic.yaml` are maintained in the [specmatic
 5. Docker
 
 ## Run Contract Tests
-Contract tests configure Specmatic using `specmatic.yaml` to fetch the shared specifications, start an HTTP stub for the Domain API, and virtualize Kafka. Ensure Docker Desktop is running because the Kafka mock runs in a container.
+Contract tests configure Specmatic using `specmatic.yaml` to fetch the shared specifications, start an HTTP stub for the Domain API, and mock Kafka. Ensure Docker Desktop is running because the Kafka mock runs in a container.
 
 ### Using npm
 ```shell
