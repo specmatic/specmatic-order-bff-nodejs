@@ -1,5 +1,5 @@
 import { config } from "dotenv";
-import { mkdirSync, readdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync } from "node:fs";
 import path from "node:path";
 import specmatic from "specmatic";
 import { GenericContainer, Wait } from "testcontainers";
@@ -27,6 +27,9 @@ describe("Contract Tests", () => {
         config();
         const excludedEndpoints = "'/health'";
         process.env.FILTER = `PATH!=${excludedEndpoints}`;
+        if (!existsSync(KAFKA_REPORTS_HOST_DIR)) {
+            mkdirSync(KAFKA_REPORTS_HOST_DIR, { recursive: true });
+        }
         appServer = await startAppServer(process.env.APP_PORT);
         httpStub = await specmatic.startHttpStub(process.env.HTTP_STUB_HOST, Number.parseInt(process.env.HTTP_STUB_PORT || "8090"));
         specmaticKafkaContainer = await new GenericContainer("specmatic/enterprise")
@@ -37,6 +40,7 @@ describe("Contract Tests", () => {
             .withCommand(["mock"])
             .withExposedPorts({ host: 9092, container: 9092 })
             .withExposedPorts({ host: 9999, container: 9999 })
+            .withAutoRemove(true)
             .withLogConsumer(stream => {
                 stream.on("data", process.stdout.write.bind(process.stdout));
                 stream.on("err", process.stderr.write.bind(process.stderr));
@@ -52,7 +56,7 @@ describe("Contract Tests", () => {
         await specmatic.stopHttpStub(httpStub);
         await dumpAsyncReports();
         console.log("Stopping Specmatic Kafka container");
-        await specmaticKafkaContainer.stop();
+        await specmaticKafkaContainer.stop({ remove: true, removeVolumes: true });
         console.log("Specmatic Kafka container stopped");
     }, TEST_TIMEOUT_MS);
 
