@@ -8,7 +8,7 @@ import { getApp, startAppServer, stopAppServer } from "./util/app.server.js";
 const TEST_TIMEOUT_MS = 10 * 60 * 1000;
 const REPORT_DUMP_TIMEOUT_MS = 30 * 1000;
 const KAFKA_API_SERVER = "http://localhost:9999";
-const KAFKA_REPORTS_HOST_DIR = path.resolve("./build/reports/specmatic");
+const REPORTS_DIR = path.resolve("./build/reports/specmatic");
 describe("Contract Tests", () => {
     /**
      * @type {any}
@@ -27,19 +27,18 @@ describe("Contract Tests", () => {
         config();
         const excludedEndpoints = "'/health'";
         process.env.FILTER = `PATH!=${excludedEndpoints}`;
-        if (!existsSync(KAFKA_REPORTS_HOST_DIR)) {
-            mkdirSync(KAFKA_REPORTS_HOST_DIR, { recursive: true });
+        if (!existsSync(REPORTS_DIR)) {
+            mkdirSync(REPORTS_DIR, { recursive: true });
         }
         appServer = await startAppServer(process.env.APP_PORT);
-        httpStub = await specmatic.startHttpStub(process.env.HTTP_STUB_HOST, Number.parseInt(process.env.HTTP_STUB_PORT || "8090"));
+        httpStub = await specmatic.startHttpStub();
         specmaticKafkaContainer = await new GenericContainer("specmatic/enterprise")
             .withBindMounts([
                 { source: path.resolve("specmatic.yaml"), target: "/usr/src/app/specmatic.yaml" },
-                { source: KAFKA_REPORTS_HOST_DIR, target: "/usr/src/app/build/reports/specmatic" },
+                { source: REPORTS_DIR, target: "/usr/src/app/build/reports/specmatic" },
             ])
             .withCommand(["mock"])
-            .withExposedPorts({ host: 9092, container: 9092 })
-            .withExposedPorts({ host: 9999, container: 9999 })
+            .withNetworkMode('host')
             .withAutoRemove(true)
             .withLogConsumer(stream => {
                 stream.on("data", process.stdout.write.bind(process.stdout));
@@ -61,7 +60,7 @@ describe("Contract Tests", () => {
     }, TEST_TIMEOUT_MS);
 
     test("Run tests and verify expectations", async () => {
-        await specmatic.testWithApiCoverage(getApp(), process.env.APP_HOST, Number.parseInt(process.env.APP_PORT || "8080"));
+        await specmatic.testWithApiCoverage(getApp());
         const response = await fetch(`${KAFKA_API_SERVER}/_specmatic/expectations/verification_status`)
         const responseData = await response.json();
         const isSuccess = responseData.success || false;
