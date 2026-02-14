@@ -1,12 +1,14 @@
 import { config } from "dotenv";
-import { readdirSync } from "node:fs";
+import { mkdirSync, readdirSync, rmSync } from "node:fs";
 import path from "node:path";
 import specmatic from "specmatic";
 import { GenericContainer, Wait } from "testcontainers";
 import { getApp, startAppServer, stopAppServer } from "./util/app.server.js";
 
 const TEST_TIMEOUT_MS = 10 * 60 * 1000;
+const REPORT_DUMP_TIMEOUT_MS = 30 * 1000;
 const KAFKA_API_SERVER = "http://localhost:9999";
+const KAFKA_REPORTS_HOST_DIR = path.resolve("./build/reports/specmatic");
 describe("Contract Tests", () => {
     /**
      * @type {any}
@@ -29,7 +31,8 @@ describe("Contract Tests", () => {
         httpStub = await specmatic.startHttpStub(process.env.HTTP_STUB_HOST, Number.parseInt(process.env.HTTP_STUB_PORT || "8090"));
         specmaticKafkaContainer = await new GenericContainer("specmatic/enterprise")
             .withBindMounts([
-                { source: path.resolve("specmatic.yaml"), target: "/usr/src/app/specmatic.yaml" }
+                { source: path.resolve("specmatic.yaml"), target: "/usr/src/app/specmatic.yaml" },
+                { source: KAFKA_REPORTS_HOST_DIR, target: "/usr/src/app/build/reports/specmatic" },
             ])
             .withCommand(["mock"])
             .withExposedPorts({ host: 9092, container: 9092 })
@@ -47,7 +50,10 @@ describe("Contract Tests", () => {
     afterAll(async () => {
         await stopAppServer(appServer);
         await specmatic.stopHttpStub(httpStub);
+        await dumpAsyncReports();
+        console.log("Stopping Specmatic Kafka container");
         await specmaticKafkaContainer.stop();
+        console.log("Specmatic Kafka container stopped");
     }, TEST_TIMEOUT_MS);
 
     test("Run tests and verify expectations", async () => {
@@ -101,10 +107,13 @@ async function setupKafkaExpectations(kafkaMockUrl) {
 
 async function dumpAsyncReports() {
     console.log("Dumping kafka mock reports..");
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REPORT_DUMP_TIMEOUT_MS);
     try {
         const response = await fetch(`${KAFKA_API_SERVER}/stop`, {
             method: "POST",
             body: "",
+            signal: controller.signal,
         });
         if (response.ok) {
             console.log("Reports dumped successfully!");
@@ -112,6 +121,12 @@ async function dumpAsyncReports() {
             console.log("Error occurred while dumping the reports");
         }
     } catch (error) {
-        console.log("Error occurred while dumping the reports", error);
+        if (error.name === "AbortError") {
+            console.log(`Dumping kafka mock reports timed out after ${REPORT_DUMP_TIMEOUT_MS}ms. Proceeding with teardown.`);
+        } else {
+            console.log("Error occurred while dumping the reports", error);
+        }
+    } finally {
+        clearTimeout(timeout);
     }
 }
