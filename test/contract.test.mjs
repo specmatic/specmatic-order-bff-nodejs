@@ -27,6 +27,9 @@ describe("Contract Tests", () => {
         config();
         const excludedEndpoints = "'/health'";
         process.env.FILTER = `PATH!=${excludedEndpoints}`;
+        if (!existsSync(KAFKA_REPORTS_HOST_DIR)) {
+            mkdirSync(KAFKA_REPORTS_HOST_DIR, { recursive: true });
+        }
         appServer = await startAppServer(process.env.APP_PORT);
         httpStub = await specmatic.startHttpStub(process.env.HTTP_STUB_HOST, Number.parseInt(process.env.HTTP_STUB_PORT || "8090"));
         specmaticKafkaContainer = await new GenericContainer("specmatic/enterprise")
