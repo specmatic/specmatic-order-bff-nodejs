@@ -29,8 +29,7 @@ describe("Contract Tests", () => {
         httpStub = await specmatic.startHttpStub(process.env.HTTP_STUB_HOST, Number.parseInt(process.env.HTTP_STUB_PORT || "8090"));
         specmaticKafkaContainer = await new GenericContainer("specmatic/enterprise")
             .withBindMounts([
-                { source: path.resolve("specmatic.yaml"), target: "/usr/src/app/specmatic.yaml" },
-                { source: path.resolve("./build/reports/specmatic"), target: "/usr/src/app/build/reports/specmatic" },
+                { source: path.resolve("specmatic.yaml"), target: "/usr/src/app/specmatic.yaml" }
             ])
             .withCommand(["mock"])
             .withExposedPorts({ host: 9092, container: 9092 })
