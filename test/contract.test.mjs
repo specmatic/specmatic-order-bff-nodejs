@@ -48,7 +48,6 @@ describe("Contract Tests", () => {
     afterAll(async () => {
         await stopAppServer(appServer);
         await specmatic.stopHttpStub(httpStub);
-        await dumpAsyncReports();
         await specmaticKafkaContainer.stop();
     }, TEST_TIMEOUT_MS);
 
