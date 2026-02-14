@@ -38,7 +38,8 @@ describe("Contract Tests", () => {
                 { source: REPORTS_DIR, target: "/usr/src/app/build/reports/specmatic" },
             ])
             .withCommand(["mock"])
-            .withNetworkMode('host')
+            .withExposedPorts({ host: 9092, container: 9092 })
+            .withExposedPorts({ host: 9999, container: 9999 })
             .withAutoRemove(true)
             .withLogConsumer(stream => {
                 stream.on("data", process.stdout.write.bind(process.stdout));
