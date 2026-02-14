@@ -28,7 +28,10 @@ describe("Contract Tests", () => {
         appServer = await startAppServer(process.env.APP_PORT);
         httpStub = await specmatic.startHttpStub(process.env.HTTP_STUB_HOST, Number.parseInt(process.env.HTTP_STUB_PORT || "8090"));
         specmaticKafkaContainer = await new GenericContainer("specmatic/enterprise")
-            .withBindMounts([{ source: path.resolve("specmatic.yaml"), target: "/usr/src/app/specmatic.yaml" }])
+            .withBindMounts([
+                { source: path.resolve("specmatic.yaml"), target: "/usr/src/app/specmatic.yaml" },
+                { source: path.resolve("./build/reports/specmatic"), target: "/usr/src/app/build/reports/specmatic" },
+            ])
             .withCommand(["mock"])
             .withExposedPorts({ host: 9092, container: 9092 })
             .withExposedPorts({ host: 9999, container: 9999 })
@@ -45,6 +48,7 @@ describe("Contract Tests", () => {
     afterAll(async () => {
         await stopAppServer(appServer);
         await specmatic.stopHttpStub(httpStub);
+        await dumpAsyncReports();
         await specmaticKafkaContainer.stop();
     }, TEST_TIMEOUT_MS);
 
@@ -95,4 +99,21 @@ async function setupKafkaExpectations(kafkaMockUrl) {
         body: JSON.stringify({ expectations: [{ topic: "product-queries", count: 2 }] }),
     })
     if (!response.ok) throw new Error(await response.text());
+}
+
+async function dumpAsyncReports() {
+    console.log("Dumping kafka mock reports..");
+    try {
+        const response = await fetch(`${KAFKA_API_SERVER}/stop`, {
+            method: "POST",
+            body: "",
+        });
+        if (response.ok) {
+            console.log("Reports dumped successfully!");
+        } else {
+            console.log("Error occurred while dumping the reports");
+        }
+    } catch (error) {
+        console.log("Error occurred while dumping the reports", error);
+    }
 }
