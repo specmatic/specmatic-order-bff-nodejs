@@ -5,9 +5,11 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const app = express();
+const requireJsonContentType = require("./middlewares/requireJsonContentType");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(requireJsonContentType);
 
 const productRouter = require("./routes/products");
 const orderRouter = require("./routes/orders");

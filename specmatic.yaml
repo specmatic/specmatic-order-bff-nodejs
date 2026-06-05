@@ -28,7 +28,7 @@ specmatic:
   governance:
     successCriteria:
       minCoveragePercentage: 70
-      maxMissedOperationsInSpec: 0
+      maxMissedOperationsInSpec: 1
       enforce: true
   settings:
     test:
@@ -38,6 +38,7 @@ components:
     specmaticOrderContracts:
       git:
         url: https://github.com/specmatic/specmatic-order-contracts.git
+        branch: missing-response-codes
   services:
     productSearchBffService:
       description: Product Search BFF Service

@@ -8,6 +8,8 @@ import { getApp, startAppServer, stopAppServer } from "./util/app.server.js";
 const TEST_TIMEOUT_MS = 10 * 60 * 1000;
 const REPORT_DUMP_TIMEOUT_MS = 30 * 1000;
 const KAFKA_API_SERVER = "http://localhost:9999";
+const KAFKA_VERIFY_CHANNEL = "product-queries";
+const KAFKA_EXPECTED_MESSAGE_COUNT = 2;
 const REPORTS_DIR = path.resolve("./build/reports/specmatic");
 describe("Contract Tests", () => {
     /**
@@ -48,7 +50,8 @@ describe("Contract Tests", () => {
             })
             .withWaitStrategy(Wait.forLogMessage(/AsyncMock has started/i))
             .start();
-        await setupExpectations(httpStub.url, KAFKA_API_SERVER);
+        await snapshotKafkaExpectations(KAFKA_API_SERVER);
+        await setupExpectations(httpStub.url);
     }, TEST_TIMEOUT_MS);
 
     afterAll(async () => {
@@ -62,27 +65,17 @@ describe("Contract Tests", () => {
 
     test("Run tests and verify expectations", async () => {
         await specmatic.testWithApiCoverage(getApp());
-        const response = await fetch(`${KAFKA_API_SERVER}/_specmatic/expectations/verification_status`)
-        const responseData = await response.json();
-        const isSuccess = responseData.success || false;
-        if (typeof isSuccess === "boolean") {
-            expect(isSuccess, "Expectations verification failed. The expectations may not be set up correctly.").toBe(true);
-        } else {
-            const errors = responseData.errors || ["Something went wrong"];
-            expect(errors, `Expectations were not met. Reason(s):\n${errors.join("\n")}`).toEqual([]);
-        }
+        await verifyKafkaExpectations(KAFKA_API_SERVER);
     }, TEST_TIMEOUT_MS);
 });
 
 
 /**
- * Sets up expectations for both HTTP and Kafka
+ * Sets up HTTP expectations from local test resources.
  * @param {string} httpStubUrl - URL of the HTTP stub server
- * @param {string} kafkaMockUrl - URL of the Kafka mock server
  */
-async function setupExpectations(httpStubUrl, kafkaMockUrl) {
+async function setupExpectations(httpStubUrl) {
     await setupHttpExpectations(httpStubUrl);
-    await setupKafkaExpectations(kafkaMockUrl);
 }
 
 /**
@@ -97,16 +90,31 @@ async function setupHttpExpectations(httpStubUrl) {
 }
 
 /**
- * Sets up Kafka expectations
+ * Captures Kafka snapshot so Specmatic can track the expected channel activity.
  * @param {string} kafkaMockUrl - URL of the Kafka mock server
  */
-async function setupKafkaExpectations(kafkaMockUrl) {
-    const response = await fetch(`${kafkaMockUrl}/_specmatic/expectations`, {
+async function snapshotKafkaExpectations(kafkaMockUrl) {
+    const response = await fetch(`${kafkaMockUrl}/_specmatic/snapshot`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ expectations: [{ topic: "product-queries", count: 2 }] }),
     })
     if (!response.ok) throw new Error(await response.text());
+}
+
+/**
+ * Verifies the Kafka expectations for the product-queries channel.
+ * @param {string} kafkaMockUrl - URL of the Kafka mock server
+ */
+async function verifyKafkaExpectations(kafkaMockUrl) {
+    const response = await fetch(`${kafkaMockUrl}/_specmatic/verify?channels=${KAFKA_VERIFY_CHANNEL}`);
+    if (!response.ok) throw new Error(await response.text());
+
+    const verificationCounts = await response.json();
+    const actualCount = verificationCounts[KAFKA_VERIFY_CHANNEL];
+
+    expect(
+        actualCount,
+        `Kafka verification failed for ${KAFKA_VERIFY_CHANNEL}. Expected ${KAFKA_EXPECTED_MESSAGE_COUNT}, got ${actualCount ?? "undefined"}.`
+    ).toBe(KAFKA_EXPECTED_MESSAGE_COUNT);
 }
 
 async function dumpAsyncReports() {
@@ -114,7 +122,7 @@ async function dumpAsyncReports() {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), REPORT_DUMP_TIMEOUT_MS);
     try {
-        const response = await fetch(`${KAFKA_API_SERVER}/stop`, {
+        const response = await fetch(`${KAFKA_API_SERVER}/_specmatic/stop`, {
             method: "POST",
             body: "",
             signal: controller.signal,
