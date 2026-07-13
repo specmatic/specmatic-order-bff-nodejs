@@ -9,7 +9,7 @@ const TEST_TIMEOUT_MS = 10 * 60 * 1000;
 const REPORT_DUMP_TIMEOUT_MS = 30 * 1000;
 const KAFKA_API_SERVER = "http://localhost:9999";
 const KAFKA_VERIFY_CHANNEL = "product-queries";
-const KAFKA_EXPECTED_MESSAGE_COUNT = 2;
+const KAFKA_EXPECTED_MESSAGE_COUNT = 3;
 const REPORTS_DIR = path.resolve("./build/reports/specmatic");
 describe("Contract Tests", () => {
     /**
