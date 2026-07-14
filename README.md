@@ -33,7 +33,7 @@ Contract tests configure Specmatic using `specmatic.yaml` to fetch the shared sp
 npm install
 npm test
 ```
-`npm test` launches the BFF, spins up Specmatic HTTP and Kafka mocks, and executes the Jest contract suite with API coverage reporting. Review the generated report at `reports/specmatic/html/index.html`.
+`npm test` launches the BFF, spins up Specmatic HTTP and Kafka mocks, and executes the Jest contract suite with API coverage reporting. Review the generated report at `reports/specmatic/test/html/index.html`.
 
 ## Troubleshooting
 1. Specmatic contract tests don't show up in VSCode Test Explorer

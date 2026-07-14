@@ -2,8 +2,9 @@ name: Run tests
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   test:
@@ -63,4 +64,4 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.os }}-${{ matrix.node-version }}-html-report
-          path: build/reports/specmatic/html
+          path: build/reports/specmatic/test/html
