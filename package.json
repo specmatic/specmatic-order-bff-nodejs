@@ -15,7 +15,7 @@
     "debug": "^4.4.3",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "express-json-validator-middleware": "^3.0.1",
+    "express-json-validator-middleware": "^4.0.0",
     "kafkajs": "^2.2.4"
   },
   "specmatic": {
